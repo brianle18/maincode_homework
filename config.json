@@ -1,0 +1,18 @@
+{
+    "filename": "data/mainpipe_data_v1.jsonl",
+    "filters": {
+        "filter_alphabetic_only": true,
+        "filter_hyperlinks": true,
+        "filter_github": true,
+        "filter_text_length_threshold": 50,
+        "filter_word_count_threshold": 20,
+        "filter_duplicates": true,
+        "filter_lang_method": "lingua"
+    },
+    "cleaners": {
+        "remove_ascii_characters": true,
+        "convert_to_lowercase": true,
+        "html_normalise": true
+    },
+    "outname": "cleaned"
+}
