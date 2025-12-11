@@ -212,7 +212,7 @@ Finally to remove code snippets, `github.com` sourced texts are filtered out.
 This represents a blunt approach and could be improved by implementing code detection using regex patterns or language models trained to identify code snippets.
 The main concern is the other steps for cleaning may inadvertently modify code snippets which make them more difficult to use in training.
 Alternatively this could be simply flagged and then treated separately during training.
-Further work could involve identifying the programming language used with the `pygments` library.
+Further work could involve identifying the programming language used with the `pygments` library (or other libraries which use an ML approach such as ).
 
 === Language Detection
 To ensure the dataset is exclusively English language text, language detection is performed using two libraries: `langdetect` and `lingua`.
@@ -266,13 +266,15 @@ After running the cleaning pipeline with the default settings (deduplication, no
   columns: 2,
   table.header[Metric][Value],
   [Initial Rows], [269378],
-  [Final Rows], [123456],
-  [Rows Removed], [145922],
-  [Percentage Retained], [45.8%],
+  [Final Rows], [152974],
+  [Rows Removed], [116404],
+  [Percentage Retained], [56.8%],
 )
 #figure(caption: [Final dataset statistics], final-stats-table)
 
-The final dataset consists of 123456 rows of English language text.
+The final dataset consists of 152974 rows of English language text.
+This is quite a significant reduction from the initial dataset size of 269378 rows, indicating the cleaning steps were effective in filtering out unwanted data.
+Some work would be required to determine whether any data could be recovered by loosening some of the filtering criteria.
 
 == Analysis and Visualisation
 To inspect the results of the cleaning pipeline, several visualisations were created using `matplotlib` and `seaborn`.
@@ -306,26 +308,44 @@ The final top 20 domains are as follows:
 #figure(caption: [Top 20 domains after cleaning], final-stats-table)
 
 From the results we see no further presence of placeholder domains.
-The remaining top 10 TLDs are:
+The remaining top 20 TLDs are:
 #let tld-after-table = table(
   columns: 2,
   table.header[Domain][Rows],
-  [`com`], [47267],
-  [`org`], [7506],
-  [`uk`], [3867],
-  [`tw`], [2957],
-  [`net`], [2016],
-  [`ng`], [1766],
-  [`au`], [1512],
-  [`ca`], [1019],
-  [`edu`], [768],
-  [`info`], [564],
+  [`com`],[47267],
+  [`org`],[7506],
+  [`uk`],[3867],
+  [`tw`],[2957],
+  [`net`],[2016],
+  [`ng`],[1766],
+  [`au`],[1512],
+  [`ca`],[1019],
+  [`edu`],[768],
+  [`info`],[564],
+  [`in`],[401],
+  [`ru`],[316],
+  [`us`],[289],
+  [`sg`],[268],
+  [`za`],[261],
+  [`nz`],[251],
+  [`eu`],[242],
+  [`co`],[231],
+  [`de`],[221],
+  [`gov`],[214],
 )
-#figure(caption: [Top 10 top level domains after cleaning], tld-after-table)
+#figure(caption: [Top 20 top level domains after cleaning], tld-after-table)
 
+Interestingly enough, the `de` TLD remains in the top 20 indicating some German language text has passed through the language filtering step.
+Russian (`ru`) and Indian (`in`) TLDs are also present indicating some non-English text remains.
+
+Remaining `tw` TLD sourced texts (mostly from `www.taiwannews.com.tw`) are English language news articles so have passed the language filtering step.
+
+Further inspection of some `ru` TLD sourced texts (mostly from `http://www.ntv.ru`) shows they are Russian language news articles but structured in `Javascript` code.
+These texts need to be manually excluded.
 
 
 === Language Detection Results
+
 A bar chart showing the distribution of detected languages before and after cleaning was created to visualise the effectiveness of the language filtering step.
 
 === Text Length Distribution
@@ -336,6 +356,13 @@ A histogram of text lengths (in characters) before and after cleaning was create
 
 
 === PII Hit Rates
+
+For completeness, a single run was performed with PII detection enabled to assess the hit rates of various PII types in the dataset.
+
+The result was 127659 of 152974 rows (83.5%) contained at least one PII entity.
+This is far too loose as the majority of the dataset would be removed if rows with PII were to be excluded.
+
+In future perhaps a subset of PII types could be used to filter rows (eg. only names and addresses).
 
 = Future work
 

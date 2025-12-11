@@ -9,6 +9,7 @@ from lingua import LanguageDetectorBuilder, Language
 from pygments.lexers import guess_lexer
 from presidio_analyzer import AnalyzerEngine, BatchAnalyzerEngine
 from presidio_anonymizer import BatchAnonymizerEngine
+from tokeniser import tokenise_nltk, tokenise_spacy, tokenise_tiktoken
 
 DetectorFactory.seed = 0
 
@@ -69,6 +70,13 @@ def extract_language(
         data.loc[:, "detected_language_lang"] = (
             detector.detect_languages_in_parallel_of(data.loc[:, "text"])
         )
+
+        # Convert to ISO 639-1 codes
+        data.loc[:, "detected_language_lang"] = data.loc[
+            :, "detected_language_lang"
+        ].transform(lambda x: x.iso_code_639_1.name)
+
+        # Calculate English confidence
         data.loc[:, "detected_language_prob"] = (
             detector.compute_language_confidence_in_parallel(
                 data.loc[:, "text"], Language.ENGLISH
@@ -228,4 +236,19 @@ def detect_pii(data: pd.DataFrame, mask: bool = False) -> pd.DataFrame:
             )
         )
     data.loc[:, "has_pii"] = data.loc[:, "has_pii"].transform(lambda x: len(x) > 0)
+    return data
+
+
+def tokenise_texts(data: pd.DataFrame, method: str = "tiktoken") -> pd.DataFrame:
+    """Tokenise the 'text' column using different tokenisation methods."""
+    print("Tokenising texts...")
+    assert method in ["spacy", "nltk", "tiktoken"], (
+        "Invalid tokenisation method, choose from 'spacy', 'nltk', 'tiktoken'"
+    )
+    if method == "spacy":
+        data.loc[:, "token_count"] = data.loc[:, "text"].transform(tokenise_spacy)
+    elif method == "nltk":
+        data.loc[:, "token_count"] = data.loc[:, "text"].transform(tokenise_nltk)
+    elif method == "tiktoken":
+        data.loc[:, "token_count"] = data.loc[:, "text"].transform(tokenise_tiktoken)
     return data

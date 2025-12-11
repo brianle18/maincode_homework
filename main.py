@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 from processor import (
     clean_text_ascii,
@@ -14,18 +15,22 @@ from processor import (
     LanguageTool,
 )
 from config import read_config
+from splitting import split_data
 
 
 def load_data(file_path: str, **kwargs) -> pd.DataFrame:
     """Load data from a CSV file into a pandas DataFrame."""
-    return pd.read_json(file_path, lines=True, nrows=1000, **kwargs)
+    return pd.read_json(file_path, lines=True, **kwargs)
 
 
 if __name__ == "__main__":
     # Config options
-    config = read_config("config.json")
+    config = read_config(sys.argv[1] if len(sys.argv) > 1 else "config.json")
     filters: dict = config.get("filters", {})
     cleaners: dict = config.get("cleaners", {})
+    splitter: dict = config.get("splitter", {})
+
+    nrows = config.get("nrows", None)
 
     if not os.path.exists("output"):
         os.makedirs("output")
@@ -33,7 +38,7 @@ if __name__ == "__main__":
         os.makedirs(f"output/{config.get('outname', 'cleaned')}")
 
     # Load data
-    data = load_data(config["filename"])
+    data = load_data(config["filename"], nrows=nrows)
 
     try:
         language_tool = LanguageTool(filters.get("filter_lang_method", "lingua"))
@@ -76,10 +81,53 @@ if __name__ == "__main__":
         .pipe(
             extract_language,
             tool=language_tool,
-            en_only=True,
+            en_only=filters.get("filter_en_only", True),
             en_threshold=0.9,
         )
         .pipe(detect_pii, mask=True)
     )
-    print(len(data_processed))
+    print("Final dataset size", len(data_processed))
     data_processed.info()
+
+    # Save processed data
+    if spliter == {}:
+        print(
+            f"Saving processed data to output/{config.get('outname', 'cleaned.jsonl')}"
+        )
+        data_processed.to_jsonl(
+            f"output/{config.get('outname', 'cleaned.jsonl')}",
+            lines=True,
+            orient="records",
+        )
+    else:
+        train, valid, test = split_data(
+            data_processed,
+            test_size=splitter.get("test_size", 0.3),
+            val_size=splitter.get("val_size", 0.3),
+            random_state=splitter.get("random_state", 42),
+        )
+        # Save each split
+        print(
+            f"Saving training data to output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_train.jsonl"
+        )
+        train.to_jsonl(
+            f"output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_train.jsonl",
+            lines=True,
+            orient="records",
+        )
+        print(
+            f"Saving validation data to output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_valid.jsonl"
+        )
+        valid.to_jsonl(
+            f"output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_valid.jsonl",
+            lines=True,
+            orient="records",
+        )
+        print(
+            f"Saving test data to output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_test.jsonl"
+        )
+        test.to_jsonl(
+            f"output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_test.jsonl",
+            lines=True,
+            orient="records",
+        )

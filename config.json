@@ -7,12 +7,23 @@
         "filter_text_length_threshold": 50,
         "filter_word_count_threshold": 20,
         "filter_duplicates": true,
-        "filter_lang_method": "lingua"
+        "filter_lang_method": "lingua",
+        "filter_en_only": false,
+        "filter_code": false,
+        "mask_pii": false
     },
     "cleaners": {
         "remove_ascii_characters": true,
-        "convert_to_lowercase": true,
         "html_normalise": true
     },
-    "outname": "cleaned"
+    "splitter": {
+        "val_size": 0.3,
+        "test_size": 0.3,
+        "random_state": 42,
+        "kwargs": {
+            "stratify": "domain",
+            "shuffle": true
+        }
+    },
+    "outname": "cleaned/cleaned_mainpipe_data_v1_no_lang_filter.jsonl"
 }
