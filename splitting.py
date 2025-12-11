@@ -11,11 +11,11 @@ def split_data(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Split the DataFrame into training, validation, and test sets."""
     train_data, test_data = train_test_split(
-        data, test_size=test_size, random_state=random_state, **kwargs
+        data, test_size=(val_size + test_size), random_state=random_state, **kwargs
     )
     val_data, test_data = train_test_split(
         test_data,
-        test_size=val_size / (test_size + val_size),
+        test_size=test_size / (test_size + val_size),
         random_state=random_state,
     )
     return train_data, val_data, test_data

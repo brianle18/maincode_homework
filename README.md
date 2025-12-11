@@ -25,7 +25,7 @@ uv run main.py
 - [x] Language detection
     - [x] Check Lingua
 - [x] Code detection (filtering using github)
-    - [ ] Try pygments
+    - [x Try pygments
     - [ ] Try guesslang
 - [x] Clean text (remove special characters)
 - [x] Remove HTML tags
@@ -35,6 +35,6 @@ uv run main.py
 - [ ] Normalize text (lowercase, etc.)
 - [x] PII and detoxify
     - [ ] Detoxify - issues with install
-- [ ] Tokenise
+- [x] Tokenise
 - [ ] Mixing/Sharding
 - [ ] README and documentation

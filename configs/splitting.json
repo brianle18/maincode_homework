@@ -1,0 +1,33 @@
+{
+    "filename": "data/mainpipe_data_v1.jsonl",
+    "seed": 42,
+    "filters": {
+        "filter_alphabetic_only": true,
+        "filter_hyperlinks": true,
+        "filter_github": true,
+        "filter_text_length_threshold": 50,
+        "filter_word_count_threshold": 20,
+        "filter_duplicates": true,
+        "filter_lang_method": "lingua",
+        "filter_en_only": true,
+        "filter_code": false,
+        "mask_pii": false
+    },
+    "cleaners": {
+        "remove_ascii_characters": true,
+        "html_normalise": true
+    },
+    "splitter": {
+        "val_ratio": 0.3,
+        "test_ratio": 0.3,
+        "random_state": 42,
+        "kwargs": {
+            "shuffle": true,
+            "stratify": [
+                "domain"
+            ]
+        }
+    },
+    "tokeniser": "tiktoken",
+    "outname": "cleaned/cleaned_mainpipe_data_v1_split.jsonl"
+}

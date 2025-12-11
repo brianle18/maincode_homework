@@ -5,7 +5,7 @@
 #show: ilm.with(
   title: [Maincode Homework Task],
   author: "Dr Brian Le",
-  date: datetime(year: 2025, month: 12, day: 10),
+  date: datetime(year: 2025, month: 12, day: 12),
   bibliography: bibliography("refs.bib"),
   figure-index: (enabled: true),
   table-index: (enabled: true),
@@ -17,11 +17,13 @@
 The task given was to build an end-to-end data pipeline from a unprepared dataset.
 The task specifies the final dataset must be an English language dataset with the following criteria:
 
+#blockquote[
 1.  Data acquisition
 2.  Data cleaning, normalisation and tokenisation
 3.  Training ready exports (i.e. tokenised, mixtures, shards, etc.)
 4.  Inspectability (e.g. histograms of length, lang scores, dup markers, PII hit-rates, drop reasons)
 5.  Conceptual plan for scaling
+]
 
 The methodology and implementation of the data pipeline will be described in this report.
 Where applicable, decision points will be outlined along with the reasoning behind them.
@@ -122,6 +124,7 @@ My main focus was integrating established libraries for data cleaning and normal
 The next extension to this work would be benchmarking alternative libraries and then implementing a scaled version of the pipeline.
 
 A simple `json` based configuration file will be used to specify the parameters for each cleaning step (as well as which steps to run).
+Details of the configuration can be found in the `README.md` file in the code repository.
 
 == Data Cleaning and Normalisation
 
@@ -145,6 +148,7 @@ The cleaning steps are as follows:
 6. `clean_short_length`
 7. `extract_domain_from_col`
 8. `detect_pii` (not by default)
+9. `tokenise_text`
 
 === Deduplication
 
@@ -245,14 +249,32 @@ Note this step is not enabled by default due to the computational cost.
 
 == Data Preparation for Training
 
-To prepare for training, the dataset is shuffled and tokenised.
+To prepare for training, the dataset is shuffled, split and tokenised.
+
+=== Shuffling and Splitting
+
 Shuffling is performed using the native `pandas` function:
 
 ```python
 df.sample(frac=1, random_state=42)
 ```
 
-If particular admixtures need to be maintained (eg. domain specific data), stratified sampling could be implemented here.
+A splitting function is implemented using the `scikit-learn` @scikit-learn to divide the dataset into training, validation and test sets.
+This is a very simple split that is quite flexible.
+If maximising data is required, k-fold cross validation could be implemented instead.
+The splitting ratios are configurable via the `json` configuration file.
+A random seed can be set for reproducibility.
+
+If a specific distribution of classes is required, a stratification using a particlular column can be configured.
+This will ensure the sampled sets maintain the same class distribution as the original dataset.
+One example would be to stratify on the source domain to ensure all sources are well represented in each split.
+
+=== Tokenisation
+
+Several libraries provide tokenisation functionality including `nltk` @nltk, `spacy` @spacy and `tiktoken` @tiktoken.
+All three are implemented and can be used to do a token count if desired.
+
+The `nltk` and `spacy` libraries provide general purpose tokenisation suitable for natural language text whereas `tiktoken` is specifically designed for tokenising text for `OpenAI` models.
 
 = Results
 
@@ -372,6 +394,12 @@ The typical length of texts appears to be \~200 words with 90% being below 500 w
 )
 
 === Token Count Distribution
+A histogram of token counts after cleaning was created using the `nltk` tokenizer.
+The typical length of texts appears to be \~250 tokens with 90% being below \~1000 tokens.
+#figure(
+  image("figures/cleaned_mainpipe_data_v1_default_token_count.svg", width: 80%),
+  caption: [Token Count Distribution After Cleaning (nltk tokenizer)]
+)
 
 === PII Hit Rates
 

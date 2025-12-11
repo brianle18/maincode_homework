@@ -26,7 +26,11 @@ def load_data(file_path: str, **kwargs) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # Config options
-    config = read_config(sys.argv[1] if len(sys.argv) > 1 else "config.json")
+    try:
+        config = read_config(sys.argv[-1])
+    except Exception as e:
+        print(f"Error reading config file: {e}")
+        sys.exit(1)
     filters: dict = config.get("filters", {})
     cleaners: dict = config.get("cleaners", {})
     splitter: dict = config.get("splitter", {})
