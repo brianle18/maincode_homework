@@ -6,14 +6,6 @@
   title: [Maincode Homework Task],
   author: "Dr Brian Le",
   date: datetime(year: 2025, month: 12, day: 10),
-  // abstract: [
-  //   'Ilm (Urdu: #text(lang: "ur", font: ("Noto Nastaliq Urdu", "Noto Naskh Arabic"), size: 0.8em)[عِلْم]) is the Urdu term for knowledge. In its general usage, 'ilm may refer to knowledge of any specific thing or any form of "learning". Subsequently, the term came to be used to refer to various categories of "sciences", especially when used in its plural form ('ulum).
-  // ],
-  // preface: [
-  //   #align(center + horizon)[
-  //     Thank you for using this template #emoji.heart,\ I hope you like it #emoji.face.smile
-  //   ]
-  // ],
   bibliography: bibliography("refs.bib"),
   figure-index: (enabled: true),
   table-index: (enabled: true),
@@ -110,21 +102,24 @@ The dat pipleline will be divided into two stages:
 3. Analysis and Visualisation of Results
 
 For the pipeline implementation, `python3.13` will be used along with the following libraries:
-- `pandas`: for data ingestion, manipulation and analysis
-- `langdetect`: for language detection
-- `lingua`: for language detection
-- `BeautifulSoup`: for HTML tag removal
-- `nltk`: for tokenisation and text preprocessing
-- `presidio`: for PII detection and removal
-- `matplotlib` and `seaborn`: for data visualisation and inspection
+- `pandas` @pandas: for data ingestion, manipulation and analysis
+- `langdetect` @langdetect: for language detection
+- `lingua` @lingua: for language detection
+- `BeautifulSoup` @beautifulsoup: for HTML tag removal
+- `nltk` @nltk: for tokenisation and text preprocessing
+- `presidio` @presidio: for PII detection and removal
+- `matplotlib` @matplotlib2007 and `seaborn` @seaborn: for data visualisation and inspection
 
-Time did not allow for experimentation of `detoxify` for removal of toxic content but this would be a useful addition to the cleaning pipeline.
-The laptop I was working on has poor support for the `pytorch` version needed for `detoxify` so I was unable to get it working in time.
+Time did not allow for experimentation of `detoxify` @detoxify for removal of toxic content but this would be a useful addition to the cleaning pipeline.
+The laptop I was working on has poor support for the `pytorch` @pytorch version needed for `detoxify` so I was unable to get it working in time.
 
 Given the small size of the dataset, the entire dataset will be processed in-memory using `pandas` DataFrames.
 The `pipe` functionality of `pandas` will be used to chain together the various cleaning steps in a modular fashion.
 
-Ideally this would be scaled using a distributed data processing framework such as `Apache Spark`, `Ray` or `Dask` for larger datasets.
+Ideally this would be scaled using a distributed data processing framework such as `Apache Spark` @spark2016, `Ray` @ray or `Dask` @dask for larger datasets.
+
+My main focus was integrating established libraries for data cleaning and normalisation rather than building custom implementations from scratch.
+The next extension to this work would be benchmarking alternative libraries and then implementing a scaled version of the pipeline.
 
 A simple `json` based configuration file will be used to specify the parameters for each cleaning step (as well as which steps to run).
 
@@ -215,7 +210,7 @@ Alternatively this could be simply flagged and then treated separately during tr
 Further work could involve identifying the programming language used with the `pygments` library (or other libraries which use an ML approach such as ).
 
 === Language Detection
-To ensure the dataset is exclusively English language text, language detection is performed using two libraries: `langdetect` and `lingua`.
+To ensure the dataset is exclusively English language text, language detection is performed using two libraries: `langdetect` @langdetect and `lingua` @lingua.
 
 The `langdetect` library is used first as it is lightweight and provides a very simple implementation that can return multiple language matches with associated probabilities.
 This library can not be vectorised so the row-by-row calculation makes this a very slow step in the pipeline.
@@ -225,9 +220,9 @@ The `lingua` library is then used as an alternative option as it provides higher
 The `lingua` library also allows for detecting from a subset of languages and has an interface for batch processing.
 `lingua` also contains a quicker detection mode which sacrifices some accuracy for speed.
 
-Another library #link("https://github.com/LlmKira/fast-langdetect")[`fast-langdetect`] claims to provide high speed language detection using `fasttext` models but was not explored in this initial pipeline.
+Another library `fast-langdetect` @fastlangdetect claims to provide high speed language detection using `fasttext` models but was not explored in this initial pipeline.
 
-A final library `langid` was considered but not explored due to time constraints.
+A final library `langid` @langid2012 was considered but not explored due to time constraints.
 The `langid` library contains a larger set of languages (97) compared to `langdetect` (55) and `lingua` (75) so may provide better coverage for edge cases.
 For the sake of determining only English language text, this was not explored further.
 
@@ -236,7 +231,7 @@ The decision was to use `lingua` for the final language detection step as it pro
 === PII Removal
 
 Personally Identifiable Information (PII) removal is a step commonly performed to cleanse a dataset of sensitive information prior to training.
-The PII library used is the `presidio` library from Microsoft.
+The PII library used is the `presidio` library from Microsoft @presidio.
 This library is widely implemented including for `Azure OpenAI` services.
 It utilises a mixture of named entity recognition (NER) models, regex and rule based logic to identify and redact PII from text.
 
@@ -277,7 +272,7 @@ This is quite a significant reduction from the initial dataset size of 269378 ro
 Some work would be required to determine whether any data could be recovered by loosening some of the filtering criteria.
 
 == Analysis and Visualisation
-To inspect the results of the cleaning pipeline, several visualisations were created using `matplotlib` and `seaborn`.
+To inspect the results of the cleaning pipeline, several visualisations were created using `matplotlib` @matplotlib2007 and `seaborn` @seaborn.
 
 The final top 20 domains are as follows:
 
@@ -346,14 +341,37 @@ These texts need to be manually excluded.
 
 === Language Detection Results
 
-A bar chart showing the distribution of detected languages before and after cleaning was created to visualise the effectiveness of the language filtering step.
+A bar chart showing the distribution of detected languages before cleaning was created to visualise the effectiveness of the language filtering step.
+About 89% of the subsampled 10k rows are detected as English by `lingua` with smaller a small German (5.9%) and Spanish (4.9%) presence.
+
+Given the small % of non-English text, it may be more beneficial to loosen the language filtering criteria to retain more data (`lingua` has access to a fast build).
+
+#figure(
+  image("figures/cleaned_mainpipe_data_v1_no_lang_filter_10k_rows_lang_dist.svg", width: 80%),
+  caption: [Language Detection Before Cleaning (subsample of 10k rows)]
+)
 
 === Text Length Distribution
-A histogram of text lengths (in characters) before and after cleaning was created to visualise the impact of the cleaning steps on text length.
+A histogram of text lengths (in characters) after cleaning was created to visualise the impact of the cleaning steps on text length.
+The cleaning steps have effectively removed very short texts (less than 50 characters or 20 words). The typical length of texts appears to be \~1000 characters with 90% being below 3000 characters.
+
+#figure(
+  image("figures/data_processed_with_pii_masking_text_length.svg", width: 80%),
+  caption: [Text Length Distribution After Cleaning]
+)
 
 
 === Word Count Distribution
+Similarly, a histogram of word counts after cleaning was created.
+The cleaning steps have effectively removed very short texts (less than 20 words).
+The typical length of texts appears to be \~200 words with 90% being below 500 words.
 
+#figure(
+  image("figures/data_processed_with_pii_masking_word_count.svg", width: 80%),
+  caption: [Word Count Distribution After Cleaning]
+)
+
+=== Token Count Distribution
 
 === PII Hit Rates
 
@@ -371,12 +389,17 @@ The current implementation processes the entire dataset in-memory using `pandas`
 
 For larger datasets some batch processing or distributed data processing framework would be needed.
 Options include:
-- `Apache Spark`: widely used distributed data processing framework with support for Python via `PySpark`.
-- `Dask`: parallel computing library that integrates well with `pandas` and can scale from a single machine to a cluster.
-- `Ray`: distributed computing framework that can be used for parallel data processing
-- `Prefect` or `Airflow`: workflow orchestration tools that can manage complex data pipelines and integrate with distributed processing frameworks
+- `Apache Spark` @spark2016: widely used distributed data processing framework with support for Python via `PySpark`.
+- `Dask` @dask: parallel computing library that integrates well with `pandas` and can scale from a single machine to a cluster.
+- `Ray` @ray: distributed computing framework that can be used for parallel data processing
+- `Prefect` @prefect or `Airflow` @airflow: workflow orchestration tools that can manage complex data pipelines and integrate with distributed processing frameworks
+
+Depending on the size of the dataset, a distributed processing framework may be necessary to handle the computational load.
+For smaller datasets (~GB scale), batch processing using `pandas` or `Dask` may be sufficient.
+Otherwise, a full distributed processing framework such as `Apache Spark` or `Ray` may be required.
 
 Of note the particular steps which need efficient batching are language detection and PII removal.
+To replace either step, other packages would need to be benchmarked for accuracy and speed.
 
 The `detoxify` library for toxic content removal would also be a useful addition to the cleaning pipeline.
 Some work is required to get this working with my particular setup but should in principle be straightforward to implement.

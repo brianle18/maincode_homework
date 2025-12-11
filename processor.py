@@ -84,7 +84,7 @@ def extract_language(
         )
         if en_only:
             data = data[
-                (data["detected_language_lang"] == Language.ENGLISH)
+                (data["detected_language_lang"] == "EN")
                 & (data["detected_language_prob"] >= en_threshold)
             ]
     elif tool == LanguageTool.LANGDETECT:

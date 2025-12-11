@@ -2,6 +2,8 @@
 data/
 *.csv
 output/
+*.png
+*.svg
 
 # Python-generated files
 __pycache__/

@@ -12,6 +12,7 @@ from processor import (
     deduplicate_data,
     extract_domain_from_col,
     extract_language,
+    tokenise_texts,
     LanguageTool,
 )
 from config import read_config
@@ -31,14 +32,19 @@ if __name__ == "__main__":
     splitter: dict = config.get("splitter", {})
 
     nrows = config.get("nrows", None)
+    seed = config.get("random_seed", 42)
 
     if not os.path.exists("output"):
         os.makedirs("output")
-    if not os.path.exists(f"output/{config.get('outname', 'cleaned')}"):
-        os.makedirs(f"output/{config.get('outname', 'cleaned')}")
+    if not os.path.exists(
+        f"output/{os.path.dirname(config.get('outname', 'cleaned'))}"
+    ):
+        os.makedirs(f"output/{os.path.dirname(config.get('outname', 'cleaned'))}")
 
     # Load data
     data = load_data(config["filename"], nrows=nrows)
+    print("Initial dataset size", len(data))
+    data = data.sample(frac=1, random_state=42)
 
     try:
         language_tool = LanguageTool(filters.get("filter_lang_method", "lingua"))
@@ -84,17 +90,18 @@ if __name__ == "__main__":
             en_only=filters.get("filter_en_only", True),
             en_threshold=0.9,
         )
-        .pipe(detect_pii, mask=True)
+        .pipe(detect_pii, mask=filters.get("mask_pii", False))
+        .pipe(tokenise_texts, method=config.get("tokenisation_method", "tiktoken"))
     )
     print("Final dataset size", len(data_processed))
     data_processed.info()
 
     # Save processed data
-    if spliter == {}:
+    if splitter == {}:
         print(
             f"Saving processed data to output/{config.get('outname', 'cleaned.jsonl')}"
         )
-        data_processed.to_jsonl(
+        data_processed.to_json(
             f"output/{config.get('outname', 'cleaned.jsonl')}",
             lines=True,
             orient="records",
@@ -110,7 +117,7 @@ if __name__ == "__main__":
         print(
             f"Saving training data to output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_train.jsonl"
         )
-        train.to_jsonl(
+        train.to_json(
             f"output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_train.jsonl",
             lines=True,
             orient="records",
@@ -118,7 +125,7 @@ if __name__ == "__main__":
         print(
             f"Saving validation data to output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_valid.jsonl"
         )
-        valid.to_jsonl(
+        valid.to_json(
             f"output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_valid.jsonl",
             lines=True,
             orient="records",
@@ -126,7 +133,7 @@ if __name__ == "__main__":
         print(
             f"Saving test data to output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_test.jsonl"
         )
-        test.to_jsonl(
+        test.to_json(
             f"output/{config.get('outname', 'cleaned').replace('.jsonl', '')}_test.jsonl",
             lines=True,
             orient="records",

@@ -1,6 +1,6 @@
 import spacy
 import tiktoken
-from nltk.tokenise import word_tokenise
+from nltk.tokenize import word_tokenize
 
 
 def tokenise_spacy(text: str, model: str = "en_core_web_sm") -> int:
@@ -12,7 +12,7 @@ def tokenise_spacy(text: str, model: str = "en_core_web_sm") -> int:
 
 def tokenise_nltk(text: str) -> int:
     """Tokenise text using NLTK."""
-    tokens = word_tokenise(text)
+    tokens = word_tokenize(text)
     return len(tokens)
 
 
