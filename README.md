@@ -61,6 +61,47 @@ uv run main.py [config.json]
 - If no config path is provided, the script attempts to load `config.json` from the repository root.
 - The script prints progress and writes outputs to the `output/` directory.
 
+Quick analysis using analyser.py
+
+A lightweight analysis helper, `analyser.py`, generates several diagnostic SVG plots from a cleaned JSONL file produced by the pipeline. It produces language distribution, text length, word count and token count plots.
+
+Requirements
+- pandas, seaborn and matplotlib must be available in the environment used to run the analyser.
+
+Usage examples
+
+```bash
+# Analyse the cleaned file produced by the pipeline
+uv run python3 analyser.py output/<outname>_cleaned.jsonl
+
+# Or analyse one of the splits
+uv run python3 analyser.py output/<outname>_train.jsonl
+```
+
+Fallback (no uv):
+
+```bash
+python3 analyser.py output/<outname>_cleaned.jsonl
+```
+
+Input expectations
+- The input JSONL must be a newline-delimited JSON file readable by pandas `read_json(..., lines=True)`.
+- The analyser expects the following columns (case-sensitive) in the DataFrame: `detected_language_lang`, `text_length`, `word_length`, `token_count`.
+  - These columns are normally added by the main pipeline; if any are missing, the analyser will error or produce empty/incorrect plots.
+
+Outputs
+- The analyser writes SVG files next to the provided JSONL file with the suffixes:
+  - `_lang_dist.svg`
+  - `_text_length.svg`
+  - `_word_count.svg`
+  - `_token_count.svg`
+- The script prints the saved file paths to stdout.
+
+Notes
+- The analyser is intentionally simple: it reads the full file into memory using pandas. For very large files, sample the data or run it on a subset.
+- If a plot seems empty check whether the corresponding column exists and contains non-null numeric values.
+
+
 ## Configuration file (config.json)
 
 The pipeline is controlled by a JSON configuration file. Example keys and behaviour are described below.
@@ -118,7 +159,8 @@ Splitter (example)
     "test_size": 0.2,
     "val_size": 0.1,
     "random_state": 42
-  }
+  },
+  "outname": "cleaned_data.jsonl"
 }
 ```
 
