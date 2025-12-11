@@ -14,7 +14,7 @@ Install example (using the project's `uv` manager):
 
 ```bash
 # Install dependencies defined for the project
-uv install
+uv sync
 
 # If you need to install spaCy language models
 uv run python3 -m spacy download en_core_web_sm
